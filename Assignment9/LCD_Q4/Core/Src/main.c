@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "my_lcd.h"
+#define LCD_LINE2  0xC0   // DDRAM address for Line 2
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -92,24 +92,40 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  //     !0 -> 1
+  /* USER CODE END 2 */
   if (!lcd16x2_i2c_init(&hi2c1))
   {
       // LCD not detected
-      while(1);
-   }
+      while (1);
+  }
 
-        lcd16x2_i2c_clear();
+  lcd16x2_i2c_clear();
 
-        //Print on 1st line
-        lcd16x2_i2c_setCursor(0, 4);   // Row 0, Col 0
-        lcd16x2_i2c_printf("HELLO");
-        lcd16x2_i2c_setCursor(1, 2);   // Row 0, Col 0
-        lcd16x2_i2c_printf("I2C MODE");
+  /* Optional heading on Line 1 */
+  lcd16x2_i2c_setCursor(0, 0);
+  lcd16x2_i2c_printf("COUNT:");
+
+  /* Display numbers 1 to 20 on Line 2 */
+  for (uint8_t i = 1; i <= 20; i++)
+  {
+      lcd16x2_i2c_sendCommand(LCD_LINE2);  // Move cursor to Line 2
+
+      /* Clear previous number (important for 2-digit numbers) */
+      lcd16x2_i2c_sendData(' ');
+      lcd16x2_i2c_sendData(' ');
+      lcd16x2_i2c_sendCommand(LCD_LINE2);
+
+      lcd_print_number(i);                 // Print number
+
+      HAL_Delay(1000);                      // 500 ms delay
+  }
 
 
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -140,7 +156,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
   RCC_OscInitStruct.PLL.PLLN = 50;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -153,10 +169,10 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV8;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
